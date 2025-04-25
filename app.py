@@ -1,9 +1,11 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from utilities import cleanseq, transcript, translation, aa_names
+from utilities import cleanseq, transcript, translation, splitpolypeps
 
 app = Flask(__name__)
 CORS(app)
+
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 @app.route('/')
 def home():
     return 'OK!'
@@ -17,7 +19,13 @@ def main():
     textsequence = request.form.get('textseq')
     if filesequence:
         content = filesequence.read()
-        sequence = content.decode('utf-8')
+        string = content.decode('utf-8')
+        for l in string.splitlines():
+            line = l
+            if line[0] == '>':
+                continue
+            sequence += line
+        print(sequence)
     elif textsequence and len(textsequence.strip()) > 0:
         sequence = textsequence.strip()
     # ------------------------------------------------------------------------------------------ /
@@ -34,22 +42,19 @@ def main():
 
     # ------------------------------------------------------------------------------------------ /
 
-    # Fazem a tradução em aminoácidos, a depender da base inicial, e os escrevem em forma de sua sigla correspondente.
+    # Fazem a tradução em aminoácidos, a depender da base inicial
 
-    polypeptides_frame0 = aa_names(translation(rna, frame=0))
-    polypeptides_frame1 = aa_names(translation(rna, frame=1))
-    polypeptides_frame2 = aa_names(translation(rna, frame=2))
+    polypeptides_frame0 = translation(splitpolypeps(rna, frame=0))
 
     # ------------------------------------------------------------------------------------------ /
 
     # Retornando o arquivo .JSON contendo a análise:
 
-    result = {"Sequûencia encontrada a partir da primeira base (5' - 3')": polypeptides_frame0,
-
-              "Sequência encontrada a partir da segunda base (5' - 3')": polypeptides_frame1,
-
-              "Sequência encontrada a partir da terceira base (5' - 3')": polypeptides_frame2}
-
+    if not polypeptides_frame0:
+        result = {"Sequências encontradas": 'Nenhuma sequência encontrada...'}
+    else:
+        result = {'Sequencias encontradas': polypeptides_frame0,
+                  'Número de aminoácidos': polypeptides_frame0.count('-') - 1}
     return jsonify(result)
 
 

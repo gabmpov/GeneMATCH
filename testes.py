@@ -1,22 +1,20 @@
 from Bio.Seq import Seq, translate
 
 
-def traduzir(sequencia):
-    cadeias = []
+def traduzir(sequence):
+    polypeps = []
     stopCodons = ['UAA', 'UAG', 'UGA']
     i = 0
-    while i < (len(sequencia) - 2):
-        codon = sequencia[i:i + 3]
-        if codon == 'AUG':
-            for j in range(i, (len(sequencia) - 2), 3):
-                prox = sequencia[j:j + 3]
-                if prox in stopCodons:
-                    valido = translate(sequencia[i:j + 3])
-                    cadeias.append(valido)
-                    i = j + 3
+    for item in range(i, len(sequence) - 2, 3):
+        codon = sequence[item:item+3]
+        if codon == 'AUG': # achou o códon de início.
+            for nextt in range(item, len(sequence) - 2, 3):
+                proximocodon = sequence[nextt:nextt+3]
+                if proximocodon in stopCodons:
+                    traduzido = translate(sequence[item:nextt+3])
+                    polypeps.append(traduzido)
                     break
-        i += 3
-    return cadeias
+    return polypeps
 
 
 def aa_names(seq):
@@ -36,7 +34,7 @@ def aa_names(seq):
         sequences.append(s)
     return sequences
 
-print(aa_names(traduzir('AUGCGGAUUCGACUUGCAUGAGUUAUGGAAGGCGAGUGACUUCGAUAAGGCUACAUUGAGAAACGGCUAGUGAAGGCUGA')))
+print(traduzir('AUGCGGAUUCGACUUGCAUGAGUUAUGGAAGGCGAGUGACUUCGAUAAGGCUACAUUGAGAAACGGCUAGUGAAGGCUGA'))
 
 
 
