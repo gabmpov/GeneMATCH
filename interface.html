@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style.css">
+    <title>GeneMATCH Project</title>
+</head>
+<body>
+<header class="header">
+</header>
+<fieldset>
+    <form id="formulary">
+        <div class="fastalabel">
+        <label>Insira seu documento FASTA aqui:</label>
+        </div>
+        <div class="fastainput">
+            <input id="fileinput" name="fileseq" type="file" accept=".fa, .fasta">
+        </div>
+        <div class="textlabel">
+            <label>Ou informe a sequência de DNA no campo a seguir:</label>
+        </div>
+        <div class="textinput">
+            <textarea id="text" name="textseq" rows="5" cols="40" maxlength="500"></textarea>
+        </div>
+        <div class="button">
+            <button id="analisebutton" type="submit">Analisar</button>
+        </div>
+    </form>
+</fieldset>
+<fieldset name="backendresponse">
+    <p id="titleresultwindow">RESULTADO</p>
+    <pre id="result"></pre>
+    <button type="button" id="download">Baixar análise.</button>
+</fieldset>
+<script src="HTTP_Post.js"></script>
+</body>
+</html>
