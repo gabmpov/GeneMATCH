@@ -1,9 +1,11 @@
-from flask import Flask, request, jsonify
+import json
+from flask import Flask, request, Response
 from flask_cors import CORS
-from utilities import cleanseq, transcript, translation, splitpolypeps
+from utilities import spliceossome, rnaPolymerase, ribossome, analyze, aa_lens
 
 app = Flask(__name__)
 CORS(app)
+
 
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 @app.route('/')
@@ -13,49 +15,47 @@ def home():
 
 @app.route('/analyze', methods=['POST'])
 def main():
-    # O código abaixo verifica a presença de um arquivo ou de um texto e transforma a sequência de DNA em string.
     sequence = ''
     filesequence = request.files.get('fileseq')
     textsequence = request.form.get('textseq')
+
+    # DAR PRIORIDADE AO ARQUIVO EM CASO DE ENVIO DE TEXTO E ARQUIVO ------------------------------------------------//
+
     if filesequence:
         content = filesequence.read()
-        string = content.decode('utf-8')
-        for l in string.splitlines():
-            line = l
-            if line[0] == '>':
+        filestring = content.decode('utf-8')
+
+        for l in filestring.splitlines():
+            if l[0] == '>':
                 continue
-            sequence += line
-        print(sequence)
-    elif textsequence and len(textsequence.strip()) > 0:
-        sequence = textsequence.strip()
-    # ------------------------------------------------------------------------------------------ /
+            sequence += l
 
-    # Remove os espaços e tira qualquer letra que não seja A, T, C ou G da sequência.
+    elif textsequence and len(textsequence) > 0:
+        sequence = textsequence
 
-    dna = cleanseq(sequence)
+    # ---------------------------------------------------------------------------------------------------------------//
 
-    # ------------------------------------------------------------------------------------------ /
+    # CHAMADA DE FUNÇÕES PARA TRATAR A STRING
 
-    # Realiza a transcrição da sequência de DNA para RNA.
+    clean = spliceossome(sequence) # --> Funciona!
+    rna = rnaPolymerase(clean)     # --> Funciona!
+    transl = ribossome(rna)        # --> Funciona!
+    aminoacids = analyze(transl)   # --> Funciona!
 
-    rna = transcript(dna)
+    # CHAMADA DE FUNÇÕES PARA ANÁLISES EXTRAS
 
-    # ------------------------------------------------------------------------------------------ /
+    counts = aa_lens(transl)       # --> Funciona!
 
-    # Fazem a tradução em aminoácidos, a depender da base inicial
+    response = {
+        'Tradução': transl,
+        'Aminoácidos formados': aminoacids,
+        'Contagem de aminoácidos': counts,
+        'Observação': 'São ignorados quaisquer caracteres que não codifiquem nenhuma base nitrogenada, isto é, quaisuqer'
+                      'caracteres diferentes de A (Adenina), T (Timina), C (Citosina) ou G (Guanina).',
+    }
 
-    polypeptides_frame0 = translation(splitpolypeps(rna, frame=0))
+    return Response(json.dumps(response, indent=2), mimetype='application/json')
 
-    # ------------------------------------------------------------------------------------------ /
-
-    # Retornando o arquivo .JSON contendo a análise:
-
-    if not polypeptides_frame0:
-        result = {"Sequências encontradas": 'Nenhuma sequência encontrada...'}
-    else:
-        result = {'Sequencias encontradas': polypeptides_frame0,
-                  'Número de aminoácidos': polypeptides_frame0.count('-') - 1}
-    return jsonify(result)
 
 
 if __name__ == '__main__':
